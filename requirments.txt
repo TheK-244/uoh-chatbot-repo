@@ -1,0 +1,8 @@
+flask
+openai
+python-dotenv
+mysql-connector-python
+numpy
+requests
+werkzeug
+gunicorn

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-top">
+            <h2>UOH Assistant</h2>
+            <p>{{ user.name }}</p>
+        </div>
+        <button id="newChatBtn" class="secondary-btn">+ New chat</button>
+        {% if not user.is_admin %}
+        <button id="requestBtn" class="secondary-btn request-open-btn" type="button">+ Request missing answer</button>
+
+        <div class="user-requests-box">
+            <div class="requests-title-row">
+                <h3>My Requests</h3>
+                <a href="{{ url_for('request_history') }}">History</a>
+            </div>
+            <div class="user-requests-list">
+                {% for r in user_requests %}
+                <div class="user-request-card status-{{ r.status }}">
+                    <div class="request-status">
+                        {% if r.status in ['pending', 'open'] %}Pending{% elif r.status == 'answered' %}Answered{% elif r.status == 'ignored' %}Reviewed{% else %}{{ r.status }}{% endif %}
+                    </div>
+
+                    {% if r.status in ['pending', 'open'] %}
+                    <form method="post" action="{{ url_for('edit_user_request', request_id=r.id) }}" class="request-edit-form">
+                        <textarea name="question" required>{{ r.question }}</textarea>
+                        <button type="submit">Update</button>
+                    </form>
+                    <form method="post" action="{{ url_for('delete_user_request', request_id=r.id) }}" onsubmit="return confirm('Delete this request?')">
+                        <button class="request-mini-danger" type="submit">Delete</button>
+                    </form>
+                    {% else %}
+                    <p class="request-title">{{ r.question }}</p>
+                    {% if r.status == 'answered' %}
+                    <p class="request-answer">{{ r.answer }}</p>
+                    {% elif r.status == 'ignored' %}
+                    <p class="request-answer muted-answer">تمت مراجعة طلبك، لكن لم يتم إضافة إجابة.</p>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('hide_user_request', request_id=r.id) }}">
+                        <button class="request-mini-btn" type="submit">Hide</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="empty-request-note">No requests yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="conversation-list" id="conversationList">
+            {% for c in conversations %}
+                <div class="conversation-row" data-id="{{ c.id }}">
+                    <button class="conversation-item" type="button" data-id="{{ c.id }}">{{ c.title }}</button>
+                    <button class="conversation-delete" type="button" data-id="{{ c.id }}" title="Delete conversation">×</button>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="sidebar-links">
+            {% if user.is_admin %}<a href="{{ url_for('admin') }}">Admin</a>{% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </aside>
+
+    <main class="page-bg">
+        <div class="page-watermark" aria-hidden="true">
+            <img src="{{ url_for('static', filename='logo.PNG') }}" alt="">
+        </div>
+
+        <div class="chat-wrapper">
+            <div class="chat-header">
+                <div class="brand-text">
+                    <h1>UOH Assistant</h1>
+                    <p>Ask about faculty, buildings, FAQs, or allowed official websites.</p>
+                </div>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="message bot">Hello. How can I help you?</div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="msg" placeholder="Type your message..." autocomplete="off">
+                <button id="sendBtn">Send</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% if not user.is_admin %}
+<div id="requestModal" class="request-modal hidden" aria-hidden="true">
+    <div class="request-modal-card">
+        <div class="request-modal-header">
+            <h2>Request Missing Answer</h2>
+            <button id="closeRequestModal" type="button">×</button>
+        </div>
+        <p>Write the question that was not found. The admin will answer it later.</p>
+        <form method="post" action="{{ url_for('add_user_request') }}">
+            <textarea name="question" placeholder="Write your question..." required></textarea>
+            <button type="submit">Submit Request</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+let currentConversationId = null;
+const messages = document.getElementById("messages");
+const input = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
+const newChatBtn = document.getElementById("newChatBtn");
+const conversationList = document.getElementById("conversationList");
+const requestBtn = document.getElementById("requestBtn");
+const requestModal = document.getElementById("requestModal");
+const closeRequestModal = document.getElementById("closeRequestModal");
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function addMessage(text, type) {
+    const msgDiv = document.createElement("div");
+    msgDiv.classList.add("message", type);
+    msgDiv.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+    messages.appendChild(msgDiv);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function resetMessages() {
+    messages.innerHTML = "";
+}
+
+function showTyping() {
+    const typing = document.createElement("div");
+    typing.classList.add("message", "bot");
+    typing.id = "typing";
+    typing.textContent = "Typing...";
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
+
+function setActiveConversation(id) {
+    document.querySelectorAll(".conversation-row").forEach(row => {
+        row.classList.toggle("active", String(row.dataset.id) === String(id));
+    });
+}
+
+function renderConversationList(conversations) {
+    conversationList.innerHTML = "";
+    conversations.forEach(c => {
+        const row = document.createElement("div");
+        row.className = "conversation-row";
+        row.dataset.id = c.id;
+
+        const openBtn = document.createElement("button");
+        openBtn.type = "button";
+        openBtn.className = "conversation-item";
+        openBtn.dataset.id = c.id;
+        openBtn.textContent = c.title || "New conversation";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "conversation-delete";
+        deleteBtn.dataset.id = c.id;
+        deleteBtn.title = "Delete conversation";
+        deleteBtn.textContent = "×";
+
+        row.appendChild(openBtn);
+        row.appendChild(deleteBtn);
+        conversationList.appendChild(row);
+    });
+    if (currentConversationId) setActiveConversation(currentConversationId);
+}
+
+async function refreshConversationList() {
+    const res = await fetch("/conversations");
+    const data = await res.json();
+    renderConversationList(data.conversations || []);
+}
+
+async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, "user");
+    input.value = "";
+    showTyping();
+    sendBtn.disabled = true;
+
+    try {
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, conversation_id: currentConversationId })
+        });
+        const data = await res.json();
+        removeTyping();
+        addMessage(data.reply || "No response.", "bot");
+        if (data.conversation_id) {
+            currentConversationId = data.conversation_id;
+            await refreshConversationList();
+            setActiveConversation(currentConversationId);
+        }
+    } catch (error) {
+        removeTyping();
+        addMessage("Error connecting to server.", "bot");
+    } finally {
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+async function loadConversation(id) {
+    const res = await fetch(`/conversation/${id}`);
+    const data = await res.json();
+    currentConversationId = id;
+    resetMessages();
+    data.messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
+    setActiveConversation(id);
+}
+
+async function deleteConversation(id) {
+    if (!confirm("Delete this conversation?")) return;
+    const res = await fetch(`/conversation/${id}/delete`, { method: "POST" });
+    if (!res.ok) {
+        alert("Could not delete conversation.");
+        return;
+    }
+    if (String(currentConversationId) === String(id)) {
+        currentConversationId = null;
+        resetMessages();
+        addMessage("Conversation deleted. Start a new chat.", "bot");
+    }
+    await refreshConversationList();
+}
+
+conversationList.addEventListener("click", function(e) {
+    const deleteBtn = e.target.closest(".conversation-delete");
+    if (deleteBtn) {
+        e.stopPropagation();
+        deleteConversation(deleteBtn.dataset.id);
+        return;
+    }
+    const btn = e.target.closest(".conversation-item");
+    if (btn) loadConversation(btn.dataset.id);
+});
+
+newChatBtn.addEventListener("click", function() {
+    currentConversationId = null;
+    resetMessages();
+    addMessage("New conversation started.", "bot");
+    setActiveConversation(null);
+    input.focus();
+});
+
+if (requestBtn && requestModal && closeRequestModal) {
+    requestBtn.addEventListener("click", function() {
+        requestModal.classList.remove("hidden");
+        requestModal.setAttribute("aria-hidden", "false");
+    });
+
+    closeRequestModal.addEventListener("click", function() {
+        requestModal.classList.add("hidden");
+        requestModal.setAttribute("aria-hidden", "true");
+    });
+
+    requestModal.addEventListener("click", function(e) {
+        if (e.target === requestModal) {
+            requestModal.classList.add("hidden");
+            requestModal.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") sendMessage();
+});
+</script>
+</body>
+</html>

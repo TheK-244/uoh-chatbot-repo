@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="admin-page">
+    <header class="admin-header">
+        <div>
+            <h1>Admin Panel</h1>
+            <p>Manage knowledge data and student requests.</p>
+        </div>
+        <div class="admin-actions">
+            <a class="admin-chat-btn" href="{{ url_for('home') }}">← Back to Chat</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    <section class="admin-card">
+        <h2>Student Requests</h2>
+        <p class="section-note">Browse all requests. You can answer pending requests, update answered requests, ignore requests, or reopen ignored requests.</p>
+        <div class="request-admin-list">
+            {% for r in all_requests %}
+            <div class="request-admin-card status-{{ r.status }}">
+                <div class="request-admin-meta">
+                    <strong>{{ r.student_name }}</strong>
+                    <span>{{ r.student_email }}</span>
+                    <span>Created: {{ r.created_at }}</span>
+                    {% if r.answered_at %}<span>Answered: {{ r.answered_at }}</span>{% endif %}
+                    <span class="status-pill {{ r.status }}">{{ r.status|capitalize }}</span>
+                    {% if r.hidden_by_user %}<span class="status-pill muted">Hidden by user</span>{% endif %}
+                </div>
+                <p class="request-question">{{ r.question }}</p>
+
+                {% if r.status == 'ignored' %}
+                <p class="ignored-note">Marked as ignored.</p>
+                <div class="request-action-row">
+                    <form method="post" action="{{ url_for('reopen_user_request', request_id=r.id) }}">
+                        <button type="submit">Reopen</button>
+                    </form>
+                </div>
+                {% else %}
+                <form class="admin-form" method="post" action="{{ url_for('answer_user_request', request_id=r.id) }}">
+                    <textarea name="answer" placeholder="Write or update the answer..." required>{{ r.answer or '' }}</textarea>
+                    <button type="submit">{{ 'Update Answer' if r.status == 'answered' else 'Reply and Close Request' }}</button>
+                </form>
+                <div class="request-action-row">
+                    <form method="post" action="{{ url_for('ignore_user_request', request_id=r.id) }}" onsubmit="return confirm('Mark this request as ignored?')">
+                        <button class="danger-btn" type="submit">Mark Ignored</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="empty-note">No requests yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="admin-card">
+        <h2>Knowledge Data</h2>
+        <div class="category-columns">
+            {% for category in categories %}
+            <div class="category-column">
+                <div class="category-title-row">
+                    <h3>{{ category.name }}</h3>
+                    <button type="button" class="small-add-btn" onclick="toggleAddForm('{{ category.id }}')">+ Add</button>
+                </div>
+
+                <form id="add-form-{{ category.id }}" class="admin-form compact-add-form hidden" method="post" action="{{ url_for('add_item') }}">
+                    <input type="hidden" name="category_id" value="{{ category.id }}">
+                    <input name="title" placeholder="Title" required>
+                    <textarea name="content" placeholder="Main content"></textarea>
+                    <textarea name="meta" placeholder="Extra fields, one per line:&#10;office=Room 101&#10;email=name@uoh.edu.sa"></textarea>
+                    <button type="submit">Save</button>
+                </form>
+
+                <div class="knowledge-list">
+                    {% for item in items_by_category.get(category.name, []) %}
+                    <div class="knowledge-item-card">
+                        <strong>{{ item.title }}</strong>
+                        {% if item.content %}<p>{{ item.content[:130] }}{% if item.content|length > 130 %}...{% endif %}</p>{% endif %}
+                        <div class="item-actions">
+                            <a class="edit-btn" href="{{ url_for('edit_item', item_id=item.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('delete_item', item_id=item.id) }}" onsubmit="return confirm('Delete this item?')">
+                                <button class="danger-btn" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="empty-note">No items yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</div>
+<script>
+function toggleAddForm(categoryId) {
+    const form = document.getElementById(`add-form-${categoryId}`);
+    if (form) form.classList.toggle("hidden");
+}
+</script>
+</body>
+</html>
