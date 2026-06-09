@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="welcome-body">
+    <header class="welcome-header">
+        <a class="welcome-brand" href="{{ url_for('welcome') }}">UOH Assistant</a>
+        <nav class="welcome-nav" aria-label="روابط صفحة الترحيب" data-i18n-attr="aria-label" data-ar-aria-label="روابط صفحة الترحيب" data-en-aria-label="Welcome page links">
+            <a href="#home" data-i18n="nav_home">الرئيسية</a>
+            <a href="#about-us" data-i18n="nav_about">نبذة عنا</a>
+            <a href="{{ url_for('login') }}" data-i18n="nav_login">تسجيل الدخول</a>
+            <a class="welcome-nav-cta" href="{{ url_for('register') }}" data-i18n="nav_register">إنشاء حساب</a>
+            <button type="button" class="language-toggle" id="language-toggle" aria-label="Switch language">English</button>
+        </nav>
+    </header>
+
+    <main id="home" class="welcome-page-shell">
+        <section class="welcome-hero">
+            <div class="welcome-hero-text">
+                <p class="welcome-kicker" data-i18n="kicker">University of Hail</p>
+                <h1>
+                    <span data-i18n="hero_title">لأن كل تساؤل يدور في ذهنك هو خطوة نحو التميز الأكاديمي</span>
+                    <span class="highlight-text" data-i18n="hero_highlight">نحن هنا لنمنحك الإجابة!</span>
+                </h1>
+                <p data-i18n="hero_desc">
+                    منصتك الأولى لطرح استفساراتك عن جامعة حائل، والحصول على إجابات سريعة حول المعلومات الأكاديمية والإدارية والخدمات الجامعية.
+                </p>
+                <div class="welcome-actions">
+                    <a class="welcome-btn primary" href="{{ url_for('register') }}">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span data-i18n="start_now">ابدأ الآن</span>
+                    </a>
+                    <a class="welcome-btn secondary" href="{{ url_for('login') }}">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span data-i18n="login">تسجيل الدخول</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="welcome-hero-card" aria-label="UOH Assistant logo">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="UOH Assistant Logo">
+            </div>
+        </section>
+
+        <section class="welcome-section">
+            <div class="section-header">
+                <h2 data-i18n="services_title">الخدمات الأساسية</h2>
+                <p data-i18n="services_desc">
+                    مساعد ذكاء اصطناعي يجيب عن استفساراتك حول جامعة حائل، ويوفر المعلومات الأكاديمية والإدارية بسرعة ودقة.
+                </p>
+            </div>
+            <div class="welcome-feature-box" data-i18n="feature_box">
+                يمكن للطالب السؤال عن أعضاء هيئة التدريس، المباني، الأسئلة الشائعة، أو إرسال طلب عند عدم توفر الإجابة ليقوم الفريق بمراجعته والرد عليه.
+            </div>
+        </section>
+
+        <section id="about-us" class="welcome-section">
+            <div class="section-header">
+                <h2 data-i18n="about_title">نبذة عن المنصة</h2>
+                <p data-i18n="about_desc">بوابة تفاعلية لتسهيل تجربة الطالب داخل جامعة حائل.</p>
+            </div>
+
+            <div class="about-grid">
+                <article class="about-card">
+                    <div class="about-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <h3 data-i18n="vision_title">رؤيتنا</h3>
+                    <p data-i18n="vision_desc">اختصار الوقت في الوصول إلى المعلومات الجامعية المهمة بطريقة واضحة وسريعة.</p>
+                </article>
+
+                <article class="about-card">
+                    <div class="about-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <h3 data-i18n="who_title">من نحن</h3>
+                    <p data-i18n="who_desc">منصة مساعدة موجهة لخدمة طلاب جامعة حائل ودعمهم في استفساراتهم الأكاديمية.</p>
+                </article>
+
+                <article class="about-card">
+                    <div class="about-icon"><i class="fa-solid fa-heart"></i></div>
+                    <h3 data-i18n="values_title">قيمنا</h3>
+                    <p data-i18n="values_desc">الدقة، سهولة الوصول، جودة المعرفة، وتحسين تجربة الطالب داخل الجامعة.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="welcome-footer">
+        <div class="footer-socials">
+        </div>
+        <p data-i18n="footer">جميع الحقوق محفوظة &copy; 2026 | UOH Assistant</p>
+    </footer>
+
+<script>
+const welcomeTranslations = {
+    ar: {
+        dir: 'rtl',
+        toggle: 'English',
+        nav_home: 'الرئيسية',
+        nav_about: 'نبذة عنا',
+        nav_login: 'تسجيل الدخول',
+        nav_register: 'إنشاء حساب',
+        kicker: 'University of Hail',
+        hero_title: 'لأن كل تساؤل يدور في ذهنك هو خطوة نحو التميز الأكاديمي',
+        hero_highlight: 'نحن هنا لنمنحك الإجابة!',
+        hero_desc: 'منصتك الأولى لطرح استفساراتك عن جامعة حائل، والحصول على إجابات سريعة حول المعلومات الأكاديمية والإدارية والخدمات الجامعية.',
+        start_now: 'ابدأ الآن',
+        login: 'تسجيل الدخول',
+        services_title: 'الخدمات الأساسية',
+        services_desc: 'مساعد ذكاء اصطناعي يجيب عن استفساراتك حول جامعة حائل، ويوفر المعلومات الأكاديمية والإدارية بسرعة ودقة.',
+        feature_box: 'يمكن للطالب السؤال عن أعضاء هيئة التدريس، المباني، الأسئلة الشائعة، أو إرسال طلب عند عدم توفر الإجابة ليقوم الفريق بمراجعته والرد عليه.',
+        about_title: 'نبذة عن المنصة',
+        about_desc: 'بوابة تفاعلية لتسهيل تجربة الطالب داخل جامعة حائل.',
+        vision_title: 'رؤيتنا',
+        vision_desc: 'اختصار الوقت في الوصول إلى المعلومات الجامعية المهمة بطريقة واضحة وسريعة.',
+        who_title: 'من نحن',
+        who_desc: 'منصة مساعدة موجهة لخدمة طلاب جامعة حائل ودعمهم في استفساراتهم الأكاديمية.',
+        values_title: 'قيمنا',
+        values_desc: 'الدقة، سهولة الوصول، جودة المعرفة، وتحسين تجربة الطالب داخل الجامعة.',
+        footer: 'جميع الحقوق محفوظة &copy; 2026 | UOH Assistant'
+    },
+    en: {
+        dir: 'ltr',
+        toggle: 'العربية',
+        nav_home: 'Home',
+        nav_about: 'About Us',
+        nav_login: 'Login',
+        nav_register: 'Create Account',
+        kicker: 'University of Hail',
+        hero_title: 'Every question in your mind is a step toward academic excellence',
+        hero_highlight: 'We are here to give you the answer!',
+        hero_desc: 'Your first platform for asking about the University of Hail and getting quick answers about academic, administrative, and university service information.',
+        start_now: 'Start Now',
+        login: 'Login',
+        services_title: 'Core Services',
+        services_desc: 'An AI assistant that answers your questions about the University of Hail and provides academic and administrative information quickly and accurately.',
+        feature_box: 'Students can ask about faculty members, buildings, frequently asked questions, or submit a request when an answer is unavailable so the team can review and respond.',
+        about_title: 'About the Platform',
+        about_desc: 'An interactive portal that simplifies the student experience at the University of Hail.',
+        vision_title: 'Our Vision',
+        vision_desc: 'Reduce the time needed to access important university information clearly and quickly.',
+        who_title: 'Who We Are',
+        who_desc: 'A support platform designed to serve University of Hail students and help with their academic inquiries.',
+        values_title: 'Our Values',
+        values_desc: 'Accuracy, accessibility, knowledge quality, and improving the student experience inside the university.',
+        footer: 'All rights reserved &copy; 2026 | UOH Assistant'
+    }
+};
+
+function setWelcomeLanguage(lang) {
+    const selected = welcomeTranslations[lang] || welcomeTranslations.ar;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = selected.dir;
+    document.body.dir = selected.dir;
+
+    document.querySelectorAll('[data-i18n]').forEach((element) => {
+        const key = element.dataset.i18n;
+        if (selected[key]) {
+            element.innerHTML = selected[key];
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-attr]').forEach((element) => {
+        const attr = element.dataset.i18nAttr;
+        const value = element.dataset[lang + attr.replace(/-([a-z])/g, (_, c) => c.toUpperCase())];
+        if (attr && value) {
+            element.setAttribute(attr, value);
+        }
+    });
+
+    const toggle = document.getElementById('language-toggle');
+    toggle.textContent = selected.toggle;
+    localStorage.setItem('welcomeLanguage', lang);
+}
+
+const savedWelcomeLanguage = localStorage.getItem('welcomeLanguage') || 'ar';
+setWelcomeLanguage(savedWelcomeLanguage);
+
+document.getElementById('language-toggle').addEventListener('click', () => {
+    const nextLanguage = document.documentElement.lang === 'ar' ? 'en' : 'ar';
+    setWelcomeLanguage(nextLanguage);
+});
+</script>
+</body>
+</html>

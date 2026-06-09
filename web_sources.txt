@@ -1,0 +1,37 @@
+# UOH Assistant trusted web sources
+# Add one URL per line
+
+# Main pages
+https://www.uoh.edu.sa/Ar/Pages/Home.aspx
+https://www.uoh.edu.sa/Ar/pages/default.aspx
+
+# Colleges main page
+https://www.uoh.edu.sa/Ar/Colleges/Pages/default.aspx
+
+# Colleges
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Computer-Science-and-Engineering/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Engineering/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Business-Administration/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Science/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Education/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Arts/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Sharia-and-Law/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Medicine/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Dentistry/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Pharmacy/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Applied-Medical-Sciences/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Nursing/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Colleges/College-of-Public-Health-and-Health-Informatics/Pages/default.aspx
+
+# Admission and Registration
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-A-R/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-A-R/Admissions%20Department/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-A-R/uoh_adm_cri/Pages/default.aspx
+
+# Student Affairs
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-S-A/Pages/default.aspx
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-S-A/S-S-U/Pages/default.aspx
+
+# Technical services
+https://www.uoh.edu.sa/Ar/Pages/Services-Details/office365.aspx
+https://www.uoh.edu.sa/Ar/Deanships/Deanship-I-T-E-L/Pages/Technical-Support.aspx

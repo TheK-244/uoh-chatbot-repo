@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<!-- صفحة الشات الرئيسية -->
+<body>
+<div class="app-layout">
+    <!-- الشريط الجانبي للمحادثات والروابط -->
+<aside class="sidebar">
+        <div class="sidebar-top">
+            <h2 data-i18n="appTitle">UOH Assistant</h2>
+            <p>{{ user.name }}</p>
+        </div>
+        <button id="newChatBtn" class="secondary-btn" data-i18n="newChat">+ New chat</button>
+        <button id="langToggleBtn" class="secondary-btn language-toggle" type="button">العربية</button>
+        {% if not user.is_admin %}
+        <button id="requestBtn" class="secondary-btn request-open-btn" type="button" data-i18n="requestMissing">+ Request missing answer</button>
+
+        <div class="user-requests-box">
+            <div class="requests-title-row">
+                <h3 data-i18n="myRequests">My Requests</h3>
+                <a href="{{ url_for('request_history') }}" data-i18n="history">History</a>
+            </div>
+            <div class="user-requests-list">
+                {% for r in user_requests %}
+                <div class="user-request-card status-{{ r.status }}">
+                    <div class="request-status">
+                        {% if r.status == 'pending' %}<span data-i18n="statusPending">Pending</span>{% elif r.status == 'answered' %}<span data-i18n="statusAnswered">Answered</span>{% elif r.status == 'ignored' %}<span data-i18n="statusReviewed">Reviewed</span>{% else %}{{ r.status }}{% endif %}
+                    </div>
+
+                    {% if r.status == 'pending' %}
+                    <form method="post" action="{{ url_for('edit_user_request', request_id=r.id) }}" class="request-edit-form">
+                        <textarea name="question" required>{{ r.question }}</textarea>
+                        <button type="submit" data-i18n="update">Update</button>
+                    </form>
+                    <form method="post" action="{{ url_for('delete_user_request', request_id=r.id) }}" onsubmit="return confirm(t('deleteRequestConfirm'))">
+                        <button class="request-mini-danger" type="submit" data-i18n="delete">Delete</button>
+                    </form>
+                    {% else %}
+                    <p class="request-title">{{ r.question }}</p>
+                    {% if r.status == 'answered' %}
+                    <p class="request-answer">{{ r.answer }}</p>
+                    {% elif r.status == 'ignored' %}
+                    <p class="request-answer muted-answer"><span data-i18n="reviewedNoAnswer">تمت مراجعة طلبك، لكن لم يتم إضافة إجابة.</span></p>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('hide_user_request', request_id=r.id) }}">
+                        <button class="request-mini-btn" type="submit" data-i18n="hide">Hide</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="empty-request-note" data-i18n="noRequests">No requests yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="conversation-list" id="conversationList">
+            {% for c in conversations %}
+                <div class="conversation-row" data-id="{{ c.id }}">
+                    <button class="conversation-item" type="button" data-id="{{ c.id }}">{{ c.title }}</button>
+                    <button class="conversation-delete" type="button" data-id="{{ c.id }}" title="Delete conversation">×</button>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="sidebar-links">
+            {% if user.is_admin %}<a href="{{ url_for('admin') }}" data-i18n="admin">Admin</a>{% endif %}
+            <a href="{{ url_for('settings') }}" data-i18n="settings">Settings</a>
+            <a href="{{ url_for('logout') }}" data-i18n="logout">Logout</a>
+        </div>
+    </aside>
+
+    <!-- منطقة الشات والرسائل -->
+<main class="page-bg">
+        <div class="page-watermark" aria-hidden="true">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="">
+        </div>
+
+        <div class="chat-wrapper">
+            <div class="chat-header">
+                <div class="brand-text">
+                    <h1 data-i18n="appTitle">UOH Assistant</h1>
+                    <p data-i18n="subtitle">Ask about faculty, buildings, FAQs, or allowed official websites.</p>
+                </div>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="message bot" data-i18n="welcome">Hello. How can I help you?</div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="msg" data-i18n-placeholder="inputPlaceholder" placeholder="Type your message..." autocomplete="off">
+                <button id="sendBtn" data-i18n="send">Send</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% if not user.is_admin %}
+<div id="requestModal" class="request-modal hidden" aria-hidden="true">
+    <div class="request-modal-card">
+        <div class="request-modal-header">
+            <h2 data-i18n="requestTitle">Request Missing Answer</h2>
+            <button id="closeRequestModal" type="button">×</button>
+        </div>
+        <p data-i18n="requestDesc">Write the question that was not found. The admin will answer it later.</p>
+        <form method="post" action="{{ url_for('add_user_request') }}">
+            <textarea name="question" data-i18n-placeholder="requestPlaceholder" placeholder="Write your question..." required></textarea>
+            <button type="submit" data-i18n="submitRequest">Submit Request</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+let currentConversationId = null;
+const messages = document.getElementById("messages");
+const input = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
+const newChatBtn = document.getElementById("newChatBtn");
+const langToggleBtn = document.getElementById("langToggleBtn");
+const conversationList = document.getElementById("conversationList");
+const requestBtn = document.getElementById("requestBtn");
+const requestModal = document.getElementById("requestModal");
+const closeRequestModal = document.getElementById("closeRequestModal");
+
+const translations = {
+    en: {
+        appTitle: "UOH Assistant",
+        newChat: "+ New chat",
+        requestMissing: "+ Request missing answer",
+        myRequests: "My Requests",
+        history: "History",
+        statusPending: "Pending",
+        statusAnswered: "Answered",
+        statusReviewed: "Reviewed",
+        update: "Update",
+        delete: "Delete",
+        hide: "Hide",
+        noRequests: "No requests yet.",
+        reviewedNoAnswer: "Your request was reviewed, but no answer was added.",
+        admin: "Admin",
+        settings: "Settings",
+        logout: "Logout",
+        subtitle: "Ask about faculty, buildings, FAQs, or allowed official websites.",
+        welcome: "Hello. How can I help you?",
+        inputPlaceholder: "Type your message...",
+        send: "Send",
+        requestTitle: "Request Missing Answer",
+        requestDesc: "Write the question that was not found. The admin will answer it later.",
+        requestPlaceholder: "Write your question...",
+        submitRequest: "Submit Request",
+        typing: "Typing...",
+        newConversation: "New conversation started.",
+        deletedConversation: "Conversation deleted. Start a new chat.",
+        deleteConversationConfirm: "Delete this conversation?",
+        deleteRequestConfirm: "Delete this request?",
+        deleteFailed: "Could not delete conversation.",
+        connectionError: "Error connecting to server.",
+        noResponse: "No response.",
+        newConversationTitle: "New conversation",
+        languageButton: "العربية"
+    },
+    ar: {
+        appTitle: "مساعد جامعة حائل",
+        newChat: "+ محادثة جديدة",
+        requestMissing: "+ طلب إجابة غير موجودة",
+        myRequests: "طلباتي",
+        history: "السجل",
+        statusPending: "قيد الانتظار",
+        statusAnswered: "تمت الإجابة",
+        statusReviewed: "تمت المراجعة",
+        update: "تحديث",
+        delete: "حذف",
+        hide: "إخفاء",
+        noRequests: "لا توجد طلبات.",
+        reviewedNoAnswer: "تمت مراجعة طلبك، لكن لم يتم إضافة إجابة.",
+        admin: "الأدمن",
+        settings: "الإعدادات",
+        logout: "تسجيل الخروج",
+        subtitle: "اسأل عن أعضاء هيئة التدريس، المباني، الأسئلة الشائعة، أو المواقع الرسمية المسموحة.",
+        welcome: "مرحبًا، كيف أقدر أساعدك؟",
+        inputPlaceholder: "اكتب رسالتك...",
+        send: "إرسال",
+        requestTitle: "طلب إجابة غير موجودة",
+        requestDesc: "اكتب السؤال الذي لم تجد له إجابة. سيقوم الأدمن بالرد لاحقًا.",
+        requestPlaceholder: "اكتب سؤالك...",
+        submitRequest: "إرسال الطلب",
+        typing: "يكتب...",
+        newConversation: "تم بدء محادثة جديدة.",
+        deletedConversation: "تم حذف المحادثة. ابدأ محادثة جديدة.",
+        deleteConversationConfirm: "حذف هذه المحادثة؟",
+        deleteRequestConfirm: "حذف هذا الطلب؟",
+        deleteFailed: "تعذر حذف المحادثة.",
+        connectionError: "تعذر الاتصال بالخادم.",
+        noResponse: "لا يوجد رد.",
+        newConversationTitle: "محادثة جديدة",
+        languageButton: "English"
+    }
+};
+
+let currentLanguage = localStorage.getItem("uoh_ui_lang") || "en";
+
+function t(key) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || translations.en[key] || key;
+}
+
+function applyLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem("uoh_ui_lang", lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.body.classList.toggle("rtl-ui", lang === "ar");
+
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    if (langToggleBtn) langToggleBtn.textContent = t("languageButton");
+}
+
+// يحمي النص من تنفيذ HTML قبل عرضه داخل الشات.
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// يضيف رسالة جديدة داخل صندوق المحادثة.
+function addMessage(text, type) {
+    const msgDiv = document.createElement("div");
+    msgDiv.classList.add("message", type);
+    msgDiv.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+    messages.appendChild(msgDiv);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+// يمسح رسائل الواجهة عند فتح محادثة جديدة.
+function resetMessages() {
+    messages.innerHTML = "";
+}
+
+// يعرض مؤشر أن المساعد يكتب الرد.
+function showTyping() {
+    const typing = document.createElement("div");
+    typing.classList.add("message", "bot");
+    typing.id = "typing";
+    typing.textContent = t("typing");
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+// يحذف مؤشر الكتابة بعد وصول الرد.
+function removeTyping() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
+
+// يحدد المحادثة النشطة في القائمة الجانبية.
+function setActiveConversation(id) {
+    document.querySelectorAll(".conversation-row").forEach(row => {
+        row.classList.toggle("active", String(row.dataset.id) === String(id));
+    });
+}
+
+// يرسم قائمة المحادثات في الشريط الجانبي.
+function renderConversationList(conversations) {
+    conversationList.innerHTML = "";
+    conversations.forEach(c => {
+        const row = document.createElement("div");
+        row.className = "conversation-row";
+        row.dataset.id = c.id;
+
+        const openBtn = document.createElement("button");
+        openBtn.type = "button";
+        openBtn.className = "conversation-item";
+        openBtn.dataset.id = c.id;
+        openBtn.textContent = c.title || t("newConversationTitle");
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "conversation-delete";
+        deleteBtn.dataset.id = c.id;
+        deleteBtn.title = "Delete conversation";
+        deleteBtn.textContent = "×";
+
+        row.appendChild(openBtn);
+        row.appendChild(deleteBtn);
+        conversationList.appendChild(row);
+    });
+    if (currentConversationId) setActiveConversation(currentConversationId);
+}
+
+// يحدث قائمة المحادثات من السيرفر.
+async function refreshConversationList() {
+    const res = await fetch("/conversations");
+    const data = await res.json();
+    renderConversationList(data.conversations || []);
+}
+
+// يرسل رسالة المستخدم للسيرفر ويعرض رد المساعد.
+async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, "user");
+    input.value = "";
+    showTyping();
+    sendBtn.disabled = true;
+
+    try {
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, conversation_id: currentConversationId })
+        });
+        const data = await res.json();
+        removeTyping();
+        addMessage(data.reply || t("noResponse"), "bot");
+        if (data.conversation_id) {
+            currentConversationId = data.conversation_id;
+            await refreshConversationList();
+            setActiveConversation(currentConversationId);
+        }
+    } catch (error) {
+        removeTyping();
+        addMessage(t("connectionError"), "bot");
+    } finally {
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+// يحمل رسائل محادثة محفوظة عند اختيارها.
+async function loadConversation(id) {
+    const res = await fetch(`/conversation/${id}`);
+    const data = await res.json();
+    currentConversationId = id;
+    resetMessages();
+    data.messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
+    setActiveConversation(id);
+}
+
+// يحذف محادثة المستخدم من الصفحة الرئيسية.
+async function deleteConversation(id) {
+    if (!confirm(t("deleteConversationConfirm"))) return;
+    const res = await fetch(`/conversation/${id}/delete`, { method: "POST" });
+    if (!res.ok) {
+        alert(t("deleteFailed"));
+        return;
+    }
+    if (String(currentConversationId) === String(id)) {
+        currentConversationId = null;
+        resetMessages();
+        addMessage(t("deletedConversation"), "bot");
+    }
+    await refreshConversationList();
+}
+
+// يستقبل ضغطات المستخدم على عناصر قائمة المحادثات.
+conversationList.addEventListener("click", function(e) {
+    const deleteBtn = e.target.closest(".conversation-delete");
+    if (deleteBtn) {
+        e.stopPropagation();
+        deleteConversation(deleteBtn.dataset.id);
+        return;
+    }
+    const btn = e.target.closest(".conversation-item");
+    if (btn) loadConversation(btn.dataset.id);
+});
+
+// يبدأ محادثة جديدة من الواجهة.
+newChatBtn.addEventListener("click", function() {
+    currentConversationId = null;
+    resetMessages();
+    addMessage(t("newConversation"), "bot");
+    setActiveConversation(null);
+    input.focus();
+});
+
+if (requestBtn && requestModal && closeRequestModal) {
+    // يفتح نافذة إرسال طلب سؤال غير موجود.
+    requestBtn.addEventListener("click", function() {
+        requestModal.classList.remove("hidden");
+        requestModal.setAttribute("aria-hidden", "false");
+    });
+
+    // يغلق نافذة إرسال الطلب.
+    closeRequestModal.addEventListener("click", function() {
+        requestModal.classList.add("hidden");
+        requestModal.setAttribute("aria-hidden", "true");
+    });
+
+    // يغلق النافذة عند الضغط خارج صندوق الطلب.
+    requestModal.addEventListener("click", function(e) {
+        if (e.target === requestModal) {
+            requestModal.classList.add("hidden");
+            requestModal.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+
+if (langToggleBtn) {
+    langToggleBtn.addEventListener("click", function() {
+        applyLanguage(currentLanguage === "en" ? "ar" : "en");
+    });
+}
+
+applyLanguage(currentLanguage);
+
+sendBtn.addEventListener("click", sendMessage);
+// يرسل الرسالة عند الضغط على Enter.
+input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") sendMessage();
+});
+</script>
+</body>
+</html>

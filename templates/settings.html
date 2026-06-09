@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page settings-page">
+    <div class="auth-card settings-card">
+        <div class="settings-header">
+            <div>
+                <h1>الإعدادات</h1>
+                <p>معلومات الحساب وتغيير كلمة المرور.</p>
+            </div>
+            <a class="settings-back-link" href="{{ url_for('home') }}">الرجوع للشات</a>
+        </div>
+
+        {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+        {% if success %}<div class="success-box">{{ success }}</div>{% endif %}
+
+        <div class="profile-box">
+            <div class="profile-row">
+                <span>الاسم</span>
+                <strong>{{ user.name }}</strong>
+            </div>
+            <div class="profile-row">
+                <span>البريد الإلكتروني</span>
+                <strong>{{ user.email }}</strong>
+            </div>
+            <div class="profile-row">
+                <span>نوع الحساب</span>
+                <strong>{% if user.oauth_provider == 'google' %}Google{% else %}كلمة مرور{% endif %}</strong>
+            </div>
+        </div>
+
+        <form method="post" class="settings-form">
+            <h2>{% if has_local_password %}تغيير كلمة المرور{% else %}إضافة كلمة مرور للحساب{% endif %}</h2>
+
+            {% if has_local_password %}
+            <label for="current_password">كلمة المرور الحالية</label>
+            <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+            {% endif %}
+
+            <label for="new_password">كلمة المرور الجديدة</label>
+            <input id="new_password" name="new_password" type="password" autocomplete="new-password" required>
+
+            <label for="confirm_password">تأكيد كلمة المرور الجديدة</label>
+            <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+            <div id="passwordMatchMessage" class="password-match-message"></div>
+
+            <button type="submit">حفظ كلمة المرور</button>
+        </form>
+    </div>
+
+<script>
+const newPassword = document.getElementById("new_password");
+const confirmPassword = document.getElementById("confirm_password");
+const matchMessage = document.getElementById("passwordMatchMessage");
+
+function updatePasswordMatchMessage() {
+    if (!confirmPassword.value) {
+        matchMessage.textContent = "";
+        matchMessage.className = "password-match-message";
+        return;
+    }
+    if (newPassword.value === confirmPassword.value) {
+        matchMessage.textContent = "كلمة المرور متطابقة.";
+        matchMessage.className = "password-match-message match";
+    } else {
+        matchMessage.textContent = "كلمة المرور غير متطابقة.";
+        matchMessage.className = "password-match-message mismatch";
+    }
+}
+
+newPassword.addEventListener("input", updatePasswordMatchMessage);
+confirmPassword.addEventListener("input", updatePasswordMatchMessage);
+</script>
+</body>
+</html>

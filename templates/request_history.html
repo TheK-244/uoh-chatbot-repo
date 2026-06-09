@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request History - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<!-- صفحة سجل طلبات المستخدم -->
+<body>
+<div class="admin-page request-history-page">
+    <header class="admin-header">
+        <div>
+            <h1>Request History</h1>
+            <p>All your requests, their dates, status, and answers.</p>
+        </div>
+        <div class="admin-actions">
+            <a class="admin-chat-btn" href="{{ url_for('home') }}">← Back to Chat</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    <section class="admin-card">
+        <h2>All Requests</h2>
+        <div class="history-list">
+            {% for r in requests_rows %}
+            <div class="history-card status-{{ r.status }}">
+                <div class="history-meta">
+                    <span class="status-pill {{ r.status }}">
+                        {% if r.status == 'pending' %}Pending{% elif r.status == 'answered' %}Answered{% elif r.status == 'ignored' %}Reviewed{% else %}{{ r.status }}{% endif %}
+                    </span>
+                    <span>Created: {{ r.created_at }}</span>
+                    {% if r.answered_at %}<span>Answered: {{ r.answered_at }}</span>{% endif %}
+                    {% if r.hidden_by_user %}<span class="status-pill muted">Hidden</span>{% endif %}
+                </div>
+                <h3>{{ r.question }}</h3>
+                {% if r.status == 'answered' %}
+                <p class="history-answer">{{ r.answer }}</p>
+                {% elif r.status == 'ignored' %}
+                <p class="history-answer muted-answer">تمت مراجعة طلبك، لكن لم يتم إضافة إجابة.</p>
+                {% else %}
+                <p class="history-answer muted-answer">Waiting for admin answer.</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="empty-note">No requests yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+</body>
+</html>

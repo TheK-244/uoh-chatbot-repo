@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Item - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<!-- صفحة تعديل عنصر من بيانات البوت -->
+<body>
+<div class="admin-page">
+    <header class="admin-header">
+        <div>
+            <h1>Edit Knowledge Item</h1>
+            <p>Changes will automatically sync with AI documents.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin') }}">Back to Admin</a>
+            <a href="{{ url_for('home') }}">Chat</a>
+        </div>
+    </header>
+
+    <section class="admin-card edit-item-card">
+        <form class="admin-form" method="post">
+            <label>Category</label>
+            <select name="category_id" required>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if category.id == item.category_id %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Title</label>
+            <input name="title" value="{{ item.title }}" required>
+
+            <label>Main content</label>
+            <textarea name="content">{{ item.content or '' }}</textarea>
+
+            <label>Extra fields</label>
+            <textarea name="meta" placeholder="office=Room 101&#10;email=name@uoh.edu.sa">{{ meta_text }}</textarea>
+
+            <div class="form-actions">
+                <button type="submit">Save Changes</button>
+                <a class="edit-btn" href="{{ url_for('admin') }}">Cancel</a>
+            </div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-page">
+    <form class="auth-card" method="post">
+        <h1>انشاء حساب</h1>
+        {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+        <label>Name</label>
+        <input type="text" name="name" required>
+        <label>Email</label>
+        <input type="email" name="email" required>
+        <label>Password</label>
+        <input type="password" name="password" id="password" required oninput="checkStrength(this.value); checkPasswordMatch();">
+
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password" id="confirm_password" required oninput="checkPasswordMatch();">
+        <div id="password-match" class="password-match-message" aria-live="polite"></div>
+
+        <!-- مؤشر قوة كلمة المرور -->
+        <div id="strength-box" style="margin: 8px 0 4px; font-size: 13px; display:none;">
+            <div id="strength-bar" style="height:5px; border-radius:4px; margin-bottom:6px; transition: width 0.3s;"></div>
+            <ul id="strength-hints" style="margin:0; padding-right:18px; color:#bcaada; list-style:disc;">
+                <li id="hint-len">8 أحرف على الأقل</li>
+                <li id="hint-upper">حرف كبير (A-Z)</li>
+                <li id="hint-lower">حرف صغير (a-z)</li>
+                <li id="hint-digit">رقم (0-9)</li>
+                <li id="hint-symbol">رمز خاص (!@#$%...)</li>
+            </ul>
+        </div>
+
+        <button type="submit">انشاء</button>
+        <div class="auth-links">
+            <a href="{{ url_for('login') }}">تسجيل الدخول</a>
+            <a href="{{ url_for('welcome') }}">العودة</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function checkStrength(val) {
+    const box = document.getElementById('strength-box');
+    const bar = document.getElementById('strength-bar');
+    box.style.display = val.length ? 'block' : 'none';
+
+    const checks = {
+        'hint-len':    val.length >= 8,
+        'hint-upper':  /[A-Z]/.test(val),
+        'hint-lower':  /[a-z]/.test(val),
+        'hint-digit':  /[0-9]/.test(val),
+        'hint-symbol': /[!@#$%^&*()\-_=+\[\]{}|;':",./<>?]/.test(val),
+    };
+
+    let score = Object.values(checks).filter(Boolean).length;
+
+    Object.entries(checks).forEach(([id, passed]) => {
+        const el = document.getElementById(id);
+        el.style.color = passed ? '#4caf50' : '#bcaada';
+        el.style.textDecoration = passed ? 'line-through' : 'none';
+    });
+
+    const colors = ['#e53935','#e53935','#ff9800','#fdd835','#4caf50'];
+    const widths = ['20%','40%','60%','80%','100%'];
+    bar.style.background = colors[score - 1] || '#e53935';
+    bar.style.width = widths[score - 1] || '20%';
+}
+
+function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const message = document.getElementById('password-match');
+
+    if (!confirmPassword.length) {
+        message.textContent = '';
+        message.className = 'password-match-message';
+        return;
+    }
+
+    if (password === confirmPassword) {
+        message.textContent = 'كلمة المرور متطابقة';
+        message.className = 'password-match-message match';
+    } else {
+        message.textContent = 'كلمة المرور غير متطابقة';
+        message.className = 'password-match-message mismatch';
+    }
+}
+</script>
+</body>
+</html>
+
+

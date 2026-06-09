@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+venv/
+venv/Lib/site-packages/
+.DS_Store
+data/
+.env

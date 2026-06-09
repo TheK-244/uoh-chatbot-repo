@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - UOH Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-page">
+    <form class="auth-card" method="post" action="{{ url_for('verify_otp_page') }}">
+        <h1>تأكيد الحساب</h1>
+        <p style="text-align: center; color: #bcaada; font-size: 14px; margin-bottom: 20px;">
+            من أجل حماية النظام، أرسلنا كود تحقق مكون من 6 أرقام إلى إيميلك: <br><strong style="color: #fff;">{{ email }}</strong>
+        </p>
+        
+        {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+        
+        <label style="text-align: center; display: block; margin-bottom: 8px;">أدخل كود التحقق</label>
+        <input type="text" name="code" placeholder="000000" maxlength="6" required autocomplete="off" 
+               style="text-align: center; font-size: 24px; letter-spacing: 6px; padding: 12px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; width: 100%; box-sizing: border-box;">
+        
+        <button type="submit" style="margin-top: 20px;">تفعيل وتأكيد الحساب</button>
+        
+        <div class="auth-links" style="justify-content: center; margin-top: 20px;">
+            <a href="{{ url_for('register') }}">العودة لإنشاء الحساب</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
